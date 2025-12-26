@@ -1,0 +1,6 @@
+{
+  "watch": ["src", "generated"],
+  "ext": "ts,json,yaml,yml",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "bun run ./src | pino-pretty"
+}
