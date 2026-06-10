@@ -13,14 +13,16 @@ const accountRegisterValidate = ajv.compile({
         username: { type: "string", maxLength: 16 },
         password: { type: "string", minLength: 4,},
         token: {type: "string", minLength: 32  }
-    }
+    },
+    required: ["username", "password", "token"]
 })
 const accountLoginValidate = ajv.compile({
     type: "object",
     properties: {
         username: { type: "string", maxLength: 16 },
         password: { type: "string", minLength: 4,},
-    }
+    },
+    required: ["username", "password"]
 })
 
 

@@ -19,6 +19,7 @@ model Account {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   name String @unique
   password String
+  email String
   role Role @default(USER)
   profile Profile?
   session Session?
@@ -27,9 +28,12 @@ model Account {
 model Profile {
   id     String    @id @default(auto()) @map("_id") @db.ObjectId
   accessories String[]
+  effects String[]
   account   Account   @relation(fields: [accountId], references: [id])
   accountId String    @db.ObjectId @unique
   highest Json
+  accessory String
+  effect String
   vp Int @default(0)
 }
 

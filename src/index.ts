@@ -9,6 +9,7 @@ import {profile} from "./routes/profile.ts"
 import cookie from "@fastify/cookie";
 import cors from '@fastify/cors';
 import {RPCServer} from "./rpc";
+import {servers} from "./routes/servers.ts";
 
 const fastify = Fastify({
     logger: true
@@ -30,6 +31,7 @@ await fastify.register(cookie, {
 await fastify.register(account)
 await fastify.register(session)
 await fastify.register(profile)
+await fastify.register(servers)
 
 try {
     await fastify.listen({ port: Env.port })

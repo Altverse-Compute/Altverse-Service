@@ -20,3 +20,9 @@ export interface AuthResponse {
 export interface ProfileProps {
     username: string
 }
+
+export type ServersResponse = Array<{
+    name: string;
+    icon: string;
+    domain: string;
+}>

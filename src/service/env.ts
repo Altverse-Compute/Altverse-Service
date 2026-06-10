@@ -15,6 +15,7 @@ function getEnv(key: string, fallback?: string): string {
 export const Env = {
     port: Number(getEnv('PORT', "7001")),
     gPort: Number(getEnv('GRPC_PORT', "7020")),
+    gTimeout: Number(getEnv('GRPC_TIMEOUT', '10000')),
     frontendUrl: getEnv('FRONTEND_URL', "http://localhost:7010"),
     databseUrl: getEnv('DATABASE_URL', "mongodb://root:example@127.0.0.1/altverse"),
     mode: getEnv('MODE', "dev"),

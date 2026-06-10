@@ -16,6 +16,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
+    "start": "bun run ./src",
     "prisma:gen": "prisma generate",
     "gen-proto": "proto-loader-gen-types --longs=String --enums=String  --oneofs --grpcLib=@grpc/grpc-js --outDir=src/rpc/interfaces src/proto/proto/*.proto"
   },

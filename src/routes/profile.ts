@@ -10,7 +10,8 @@ const validateProfile = ajv.compile({
         username: {
             type: "string"
         }
-    }
+    },
+    required: ["username"]
 })
 
 export const profile = (app: FastifyInstance) => {
