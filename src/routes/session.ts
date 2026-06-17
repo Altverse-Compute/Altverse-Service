@@ -64,7 +64,7 @@ export const session = (app: FastifyInstance) => {
         }
     })
 
-    app.get('/logout', async (req, res) => {
+    app.post('/logout', async (req, res) => {
             if (req.cookies !== undefined && req.cookies.token !== undefined) {
                 const unsignedToken = req.unsignCookie(req.cookies?.token)
 

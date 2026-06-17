@@ -1,5 +1,4 @@
 import type { AwardRequest, AwardResponse } from "../types.ts";
-import { Role } from "@proto/ts/connection/Role.ts";
 import grpc from "@grpc/grpc-js";
 import { database } from "../../service/database.ts";
 import { validateAward } from "./schema.ts";
@@ -10,12 +9,14 @@ import {
 } from "../errors.ts";
 import { authMiddleware } from "../middleware.ts";
 import type { AwardRequest__Output } from "@proto/ts/connection/AwardRequest.ts";
+import {logger} from "../../logger.ts";
 
 export const AwardPlayer = async (
   call: grpc.ServerUnaryCall<AwardRequest, AwardResponse>,
   callback: grpc.sendUnaryData<AwardResponse>,
 ) => {
   if (!authMiddleware(call.metadata.getMap())) {
+    logger.warn(call.metadata.getMap())
     return callback(AuthenticationFailed);
   }
 
@@ -44,6 +45,8 @@ export const AwardPlayer = async (
   if (request.vp) {
     data["vp"] = profile.vp + request.vp;
   }
+
+  logger.info("RPC player awarded. accountId" +  accountId)
 
   await database.profile.update({
     where: {

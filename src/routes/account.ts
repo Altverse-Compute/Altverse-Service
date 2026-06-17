@@ -72,7 +72,7 @@ export const account = (app: FastifyInstance) => {
 
             res.setCookie("token", token, {path: '/',
                 httpOnly: true,
-                secure: Env.mode !== 'dev',
+                secure: !Env.devMode,
                 sameSite: 'strict',
                 maxAge: 7 * 24 * 60 * 60,
                 signed: true});
@@ -131,7 +131,7 @@ export const account = (app: FastifyInstance) => {
 
                 res.setCookie("token", token, {path: '/',
                     httpOnly: true,
-                    secure: Env.mode !== 'dev',
+                    secure: !Env.devMode,
                     sameSite: 'strict',
                     maxAge: 7 * 24 * 60 * 60,
                     signed: true});

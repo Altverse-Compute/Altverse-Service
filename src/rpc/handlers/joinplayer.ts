@@ -5,14 +5,14 @@ import {database} from "../../service/database.ts";
 import {validateToken} from "./schema.ts";
 import {AccountAuthenticationFailed, AuthenticationFailed} from "../errors.ts";
 import {authMiddleware} from "../middleware.ts";
+import {logger} from "../../logger.ts";
 
 export const JoinPlayer = async (call: grpc.ServerUnaryCall<JoinPlayerRequest, JoinPlayerResponse>, callback: grpc.sendUnaryData<JoinPlayerResponse>) => {
-
         if (!authMiddleware(call.metadata.getMap())) {
             return callback(AuthenticationFailed)
         }
 
-
+        logger.warn("RPC " + JSON.stringify(call.request))
         if (!validateToken(call.request)) {
             return callback(AccountAuthenticationFailed)
         }

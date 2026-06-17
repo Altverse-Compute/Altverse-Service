@@ -10,14 +10,6 @@ export const servers = (app: FastifyInstance) => {
             domain: v.domain,
             online: v.online
         }))
-        if (Env.mode == "dev") servers.push({
-            icon: "X",
-            name: "Dev Server",
-            domain: "http://localhost:7002",
-            online: 1
-        })
-
-        console.log(servers)
 
         res.code(200).send({
             status: "success",

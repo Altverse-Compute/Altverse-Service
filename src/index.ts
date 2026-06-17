@@ -26,7 +26,7 @@ await fastify.register(cors, {
     hook: "preValidation"
 })
 await fastify.register(cookie, {
-    secret: Env.cookieSecret
+    secret: Env.cookieSecret,
 })
 await fastify.register(account)
 await fastify.register(session)

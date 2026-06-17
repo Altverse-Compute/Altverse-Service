@@ -5,6 +5,7 @@ import {randomBytes} from "crypto";
 import type {AuthenticationRequest, AuthenticationResponse} from "./types.ts";
 import grpc, {type MetadataValue} from "@grpc/grpc-js";
 import {AuthenticationFailed} from "./errors.ts";
+import {logger} from "../logger.ts";
 
 export let serversOnline: Record<string, {
     id: string;
@@ -26,7 +27,6 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
     const valid = validateAuth(request)
 
     if (valid) {
-        console.log(request)
         const token = (request as any).token;
 
         const server = await database.server.findFirst({
@@ -35,7 +35,7 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
             }
         })
 
-        if (server && !Object.keys(serversOnline).includes(server.id)) {
+        if (server && (!Object.keys(serversOnline).includes(server.id) || Env.devMode)) {
             const session = randomBytes(32).toString("hex")
 
             serversOnline[server.id] = {
@@ -47,6 +47,13 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
                 online: 0,
                 session
             }
+
+            logger.info({
+                message: "Authentication server request was successfully registered",
+                ip: call.getPeer(),
+                token,
+                session
+            });
 
             const response = {
                 session

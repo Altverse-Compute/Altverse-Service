@@ -19,7 +19,7 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    "baseUrl": "./",
+    "baseUrl": ".",
     "types": ["bun", "node", "ws", "uuid"],
     "paths": {
       "@prisma/*": ["generated/prisma/*"],

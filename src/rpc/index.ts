@@ -1,8 +1,9 @@
 import * as grpc from "@grpc/grpc-js"
-import path from "path";
 import {Env} from "../service/env.ts";
 import {logger} from "../logger.ts";
 import {GameService} from "./services/game.ts";
+import Certificate from "../service/cert.ts";
+import loadCertificate from "../service/cert.ts";
 
 export class RPCServer {
     app: grpc.Server;
@@ -11,14 +12,26 @@ export class RPCServer {
 
         new GameService(this.app)
 
-        this.app.bindAsync("localhost:" + Env.gPort, grpc.ServerCredentials.createInsecure(), (err, port) => {
+
+        let credentials: grpc.ServerCredentials;
+        if (Env.devMode)
+            credentials = grpc.ServerCredentials.createInsecure();
+        else {
+            const certs = loadCertificate();
+
+            credentials = grpc.ServerCredentials.createSsl(certs.root, [{
+                cert_chain: certs.server,
+                private_key: certs.serverKey
+            }], true);
+        }
+
+        this.app.bindAsync("0.0.0.0:" + Env.gPort, credentials, (err, port) => {
             if (err) {
                 console.error(err)
                 logger.error("Server bind failed: " + err.message);
                 return;
             }
-            logger.info(`Server listening on port ${port}`);
-            this.app.start();
+            logger.info(`RPC server listening on port ${port}`);
         })
     }
 }

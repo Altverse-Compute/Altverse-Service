@@ -18,7 +18,11 @@ export const Env = {
     gTimeout: Number(getEnv('GRPC_TIMEOUT', '10000')),
     frontendUrl: getEnv('FRONTEND_URL', "http://localhost:7010"),
     databseUrl: getEnv('DATABASE_URL', "mongodb://root:example@127.0.0.1/altverse"),
-    mode: getEnv('MODE', "dev"),
+    devMode: getEnv('DEV_MODE', "true") == "true",
     registerToken: getEnv('REGISTER_TOKEN', "9a506d6c192035582d7e53854a16eeb1"),
-    cookieSecret: getEnv('COOKIE_SECRET', 'Some seret'),
+    cookieSecret: getEnv('COOKIE_SECRET', 'Some secret'),
+    serverKeyCertFileName: getEnv("SERVER_KEY_PEM", "server-key.pem"),
+    selfSignedCertificates: getEnv("SELF_SIGNED_CERTIFICATES", "true") === "true",
+    serverCertFileName: getEnv("SERVER_PEM", "server.pem"),
+    rootCertFileName: getEnv("ROOT_PEM", "root.pem"),
 }
