@@ -2,7 +2,7 @@ import grpc from "@grpc/grpc-js"
 import type {PingRequest, PongResponse} from "../types.ts";
 import {authMiddleware, serversOnline} from "../middleware.ts";
 import {validatePing} from "./schema.ts";
-import {AuthenticationFailed} from "../errors.ts";
+import {AuthenticationPingFailed} from "../errors.ts";
 
 
 export const Ping = (call: grpc.ServerUnaryCall<PingRequest, PongResponse>, callback: grpc.sendUnaryData<PongResponse>) => {
@@ -22,5 +22,5 @@ export const Ping = (call: grpc.ServerUnaryCall<PingRequest, PongResponse>, call
             return
     }
 
-    return callback(AuthenticationFailed)
+    return callback(AuthenticationPingFailed)
 }

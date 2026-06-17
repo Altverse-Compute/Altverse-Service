@@ -23,6 +23,6 @@ export const Env = {
     cookieSecret: getEnv('COOKIE_SECRET', 'Some secret'),
     serverKeyCertFileName: getEnv("SERVER_KEY_PEM", "server-key.pem"),
     selfSignedCertificates: getEnv("SELF_SIGNED_CERTIFICATES", "true") === "true",
-    serverCertFileName: getEnv("SERVER_PEM", "server.pem"),
-    rootCertFileName: getEnv("ROOT_PEM", "root.pem"),
+    certFileName: getEnv("CERT_PEM", "cert.pem"),
+    privateFileName: getEnv("PRIVATE_PEM", "private.pem"),
 }

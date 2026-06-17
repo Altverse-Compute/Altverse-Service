@@ -4,7 +4,7 @@ import {Env} from "../service/env.ts";
 import {randomBytes} from "crypto";
 import type {AuthenticationRequest, AuthenticationResponse} from "./types.ts";
 import grpc, {type MetadataValue} from "@grpc/grpc-js";
-import {AuthenticationFailed} from "./errors.ts";
+import {AuthenticationAlreadyLoginedFailed, AuthenticationFailed} from "./errors.ts";
 import {logger} from "../logger.ts";
 
 export let serversOnline: Record<string, {
@@ -38,6 +38,8 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
         if (server && (!Object.keys(serversOnline).includes(server.id) || Env.devMode)) {
             const session = randomBytes(32).toString("hex")
 
+            removeServer(server.id)
+
             serversOnline[server.id] = {
                 id: server.id,
                 icon: server.icon,
@@ -61,6 +63,8 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
 
             callback(null, response)
             return
+        } else {
+            return callback(AuthenticationAlreadyLoginedFailed)
         }
     }
 

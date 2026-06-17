@@ -46,7 +46,7 @@ export const AwardPlayer = async (
     data["vp"] = profile.vp + request.vp;
   }
 
-  logger.info("RPC player awarded. accountId" +  accountId)
+  logger.info("RPC player awarded. accountId " +  accountId + " VP " + data["vp"])
 
   await database.profile.update({
     where: {
