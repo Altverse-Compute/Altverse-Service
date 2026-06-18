@@ -4,7 +4,7 @@ import grpc from "@grpc/grpc-js"
 import {database} from "../../service/database.ts";
 import {validateToken} from "./schema.ts";
 import {AccountAuthenticationFailed, AuthenticationJoinPlayerFailed} from "../errors.ts";
-import {authMiddleware} from "../middleware.ts";
+import {authMiddleware, wrapLog} from "../middleware.ts";
 import {logger} from "../../logger.ts";
 
 export const JoinPlayer = async (call: grpc.ServerUnaryCall<JoinPlayerRequest, JoinPlayerResponse>, callback: grpc.sendUnaryData<JoinPlayerResponse>) => {
@@ -33,6 +33,11 @@ export const JoinPlayer = async (call: grpc.ServerUnaryCall<JoinPlayerRequest, J
             where: {
                 id: session.accountId
             }
+        })
+
+        wrapLog(call, "joinPlayer", {
+            accountId: session.accountId,
+            username: account!.name,
         })
 
         if (!account) {

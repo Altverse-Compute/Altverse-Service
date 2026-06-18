@@ -19,10 +19,10 @@ export class RPCServer {
         else {
             const certs = loadCertificate();
 
-            credentials = grpc.ServerCredentials.createSsl(certs.cert, [{
-                cert_chain: certs.cert,
-                private_key: certs.private
-            }]);
+            credentials = grpc.ServerCredentials.createSsl(certs.caCert, [{
+                cert_chain: certs.serviceCert,
+                private_key: certs.serviceKey
+            }], true);
         }
 
         this.app.bindAsync("0.0.0.0:" + Env.gPort, credentials, (err, port) => {

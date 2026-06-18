@@ -21,8 +21,7 @@ export const Env = {
     devMode: getEnv('DEV_MODE', "true") == "true",
     registerToken: getEnv('REGISTER_TOKEN', "9a506d6c192035582d7e53854a16eeb1"),
     cookieSecret: getEnv('COOKIE_SECRET', 'Some secret'),
-    serverKeyCertFileName: getEnv("SERVER_KEY_PEM", "server-key.pem"),
-    selfSignedCertificates: getEnv("SELF_SIGNED_CERTIFICATES", "true") === "true",
-    certFileName: getEnv("CERT_PEM", "cert.pem"),
-    privateFileName: getEnv("PRIVATE_PEM", "private.pem"),
+    serviceCert: getEnv("SERVICE_CERT", "service.pem"),
+    serviceKey: getEnv("SERVICE_KEY", "service-key.pem"),
+    caCert: getEnv("CA_CERT", "ca.pem"),
 }

@@ -8,3 +8,4 @@ export type JoinPlayerRequest = ProtoGrpcType["connection"]["JoinPlayerRequest"]
 export type JoinPlayerResponse = ProtoGrpcType["connection"]["JoinPlayerResponse"]
 export type AwardRequest = ProtoGrpcType["connection"]["AwardRequest"]
 export type AwardResponse = ProtoGrpcType["connection"]["AwardResponse"]
+

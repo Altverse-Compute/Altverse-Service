@@ -6,13 +6,14 @@ import type {AuthenticationRequest, AuthenticationResponse} from "./types.ts";
 import grpc, {type MetadataValue} from "@grpc/grpc-js";
 import {AuthenticationAlreadyLoginedFailed, AuthenticationFailed} from "./errors.ts";
 import {logger} from "../logger.ts";
+import {hash} from "../util/hash.ts";
 
 export let serversOnline: Record<string, {
     id: string;
     icon: string;
     name: string;
     domain: string;
-    timeout: NodeJS.Timeout;
+    lastTimeSeen: number;
     online: number;
     session: string;
 }> = {}
@@ -45,14 +46,13 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
                 icon: server.icon,
                 name: server.name,
                 domain: server.domain,
-                timeout: setTimeout(() => removeServer(server.id), Env.gTimeout),
+                lastTimeSeen: Date.now(),
                 online: 0,
                 session
             }
 
-            logger.info({
+            wrapLog(call, "authentication", {
                 message: "Authentication server request was successfully registered",
-                ip: call.getPeer(),
                 token,
                 session
             });
@@ -63,7 +63,7 @@ export const Authentication = async (call: grpc.ServerUnaryCall<AuthenticationRe
 
             callback(null, response)
             return
-        } else {
+        } else if (server) {
             return callback(AuthenticationAlreadyLoginedFailed)
         }
     }
@@ -77,10 +77,23 @@ export const authMiddleware = (metadata: { [key: string]: MetadataValue; } ) => 
         const filteredServers = Object.values(serversOnline).filter(v => v.session === tokens)
         if (filteredServers.length != 0) {
             const server = filteredServers[0]
-            clearTimeout(server.timeout)
-            serversOnline[server.id].timeout = setTimeout(() => removeServer(server.id), Env.gTimeout)
-            return server
+            if (server.lastTimeSeen <= Date.now() + Env.gTimeout) {
+                serversOnline[server.id].lastTimeSeen = Date.now()
+                return server
+            } else {
+                removeServer(server.id)
+                return false;
+            }
         }
     }
     return false;
+}
+
+export function wrapLog<Request, Response>(call: grpc.ServerUnaryCall<Request, Response>, route: string, object: Object) {
+    logger.info({
+        additional: object,
+        method: "RPC",
+        remoteAddress: call.getHost(),
+        path: "/" + route
+    })
 }
