@@ -1,64 +1,68 @@
-import type {FastifyInstance} from "fastify";
-import Ajv from "ajv";
-import type {AuthResponse, ProfileProps} from "./types.ts";
-import {database} from "../service/database.ts";
-
-const ajv = new Ajv()
-const validateProfile = ajv.compile({
-    type: "object",
-    properties: {
-        username: {
-            type: "string"
-        }
-    },
-    required: ["username"]
-})
+import type { FastifyInstance } from "fastify";
+import type { ProfileProps } from "./types.ts";
+import { database } from "../service/database.ts";
+import { dbToProtoRole, finishAndSend, headers } from "src/util/routes.ts";
+import { http } from "@proto/js/index.js";
 
 export const profile = (app: FastifyInstance) => {
-    app.get('/profile/:username', async (req, res) => {
-        const valid = validateProfile(req.params)
+  app.route({
+    url: "/profile/:username",
+    method: "GET",
+    schema: {
+      params: {
+        type: "object",
+        required: ["username"],
+        properties: {
+          username: { type: "string", maxLength: 16 },
+        },
+      },
+    },
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "5s",
+      },
+    },
+    bodyLimit: 2048,
+    handler: async (req, res) => {
+      headers(res);
+      const body = req.params as ProfileProps;
 
-        if (!valid) {
-            res.status(400).send({ status: "invalid_body" })
-            return;
-        }
+      const account = await database.account.findFirst({
+        where: {
+          name: body.username,
+        },
+      });
 
-        const body = req.params as ProfileProps
+      if (account === null) {
+        res.status(http.ResponseStatus.NotFound).send();
+        return;
+      }
 
-        const account = await database.account.findFirst({
-            where: {
-                name: body.username
-            }
-        })
+      const profile = await database.profile.findFirst({
+        where: {
+          accountId: account.id,
+        },
+      });
 
-        if (account === null) {
-            res.status(404).send({ status: "not_found" })
-            return;
-        }
+      if (profile === null) {
+        res.status(http.ResponseStatus.NotFound).send();
+        return;
+      }
 
-        const profile = await database.profile.findFirst({
-            where: {
-                accountId: account.id
-            }
-        })
-
-        if (profile === null) {
-            res.status(404).send({ status: "not_found" })
-            return;
-        }
-
-        const prof: AuthResponse = {
+      res.code(http.ResponseStatus.Ok);
+      finishAndSend(
+        http.ProfileResponse.encode({
+          profile: {
             username: account.name,
-            highest: profile.highest as Object,
+            highest: profile.highest as Record<string, string>,
             accessories: profile.accessories,
             vp: profile.vp,
-            role: account.role
-        }
-
-        res.code(200).send({
-            status: "success",
-            profile: prof
-        })
-
-    })
-}
+            role: dbToProtoRole(account.role),
+          },
+        }),
+        res,
+      );
+    },
+  });
+};

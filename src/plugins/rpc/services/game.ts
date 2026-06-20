@@ -6,8 +6,9 @@ import {Ping} from "../handlers/ping.ts";
 import {Authentication} from "../middleware.ts";
 import type {ProtoGrpcType} from "@proto/ts/rpc.ts";
 import { AwardPlayer } from "../handlers/awardplayer.ts";
+import type {FastifyBaseLogger, FastifyInstance} from "fastify";
 
-const protoPath = path.join(__dirname, "../../proto/proto/rpc.proto")
+const protoPath = path.join(__dirname, "../../../proto/proto/rpc.proto")
 
 export class GameService {
     constructor(app: grpc.Server) {

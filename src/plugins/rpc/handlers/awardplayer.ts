@@ -1,15 +1,14 @@
 import type { AwardRequest, AwardResponse } from "../types.ts";
 import grpc from "@grpc/grpc-js";
-import { database } from "../../service/database.ts";
+import { database } from "../../../service/database.ts";
 import { validateAward } from "./schema.ts";
 import {
-  AccountAuthenticationFailed,
   AuthenticationFailed,
   AwardAuthenticationFailed,
 } from "../errors.ts";
 import {authMiddleware, wrapLog} from "../middleware.ts";
 import type { AwardRequest__Output } from "@proto/ts/connection/AwardRequest.ts";
-import {logger} from "../../logger.ts";
+import {logger} from "../../../logger.ts";
 
 export const AwardPlayer = async (
   call: grpc.ServerUnaryCall<AwardRequest, AwardResponse>,
