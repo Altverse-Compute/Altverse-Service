@@ -5,11 +5,12 @@ import { randomBytes } from "crypto";
 import type { AuthenticationRequest, AuthenticationResponse } from "./types.ts";
 import grpc, { type MetadataValue } from "@grpc/grpc-js";
 import {
-  AuthenticationAlreadyLoginedFailed,
+  AuthenticationAlreadyLoggedFailed,
   AuthenticationFailed,
 } from "./errors.ts";
 import { logger } from "../../logger.ts";
-import { argon2hash } from "src/util/hash.ts";
+import { argon2verify } from "src/util/hash.ts";
+import type { connection } from "@proto/js/index.js";
 
 export let serversOnline: Record<
   string,
@@ -32,52 +33,56 @@ export const Authentication = async (
   call: grpc.ServerUnaryCall<AuthenticationRequest, AuthenticationResponse>,
   callback: grpc.sendUnaryData<AuthenticationResponse>,
 ) => {
-  const request = call.request;
+  const request = call.request as any as connection.AuthenticationRequest;
 
-  const valid = validateAuth(request);
-
-  if (valid) {
-    const token = await argon2hash((request as any).token);
-
-    const server = await database.server.findFirst({
-      where: {
-        token,
-      },
-    });
-
-    if (
-      server &&
-      (!Object.keys(serversOnline).includes(server.id) || Env.devMode)
-    ) {
-      const session = randomBytes(32).toString("hex");
-
-      removeServer(server.id);
-
-      serversOnline[server.id] = {
-        id: server.id,
-        icon: server.icon,
-        name: server.name,
-        domain: server.domain,
-        lastTimeSeen: Date.now(),
-        online: 0,
-        session,
-      };
-
-      wrapLog(call, "authentication", {
-        message: "Authentication server request was successfully registered",
-        token,
-        session,
+  if (request && request.token.length === 64 && request.id.length === 24) {
+    try {
+      const server = await database.server.findFirst({
+        where: {
+          id: request.id!,
+        },
       });
 
-      const response = {
-        session,
-      } as any;
+      if (server) {
+        const isTokenValid = await argon2verify(server.token, request.token);
 
-      callback(null, response);
-      return;
-    } else if (server) {
-      return callback(AuthenticationAlreadyLoginedFailed);
+        if (
+          isTokenValid &&
+          (!Object.keys(serversOnline).includes(server.id) || Env.devMode)
+        ) {
+          const session = randomBytes(32).toString("hex");
+
+          removeServer(server.id);
+
+          serversOnline[server.id] = {
+            id: server.id,
+            icon: server.icon,
+            name: server.name,
+            domain: server.domain,
+            lastTimeSeen: Date.now(),
+            online: 0,
+            session,
+          };
+
+          wrapLog(call, "authentication", {
+            message:
+              "Authentication server request was successfully registered",
+            token: request.token,
+            session,
+          });
+
+          const response = {
+            session,
+          } as any;
+
+          callback(null, response);
+          return;
+        }
+      }
+    } catch (e) {
+      return callback(AuthenticationFailed);
     }
+    return callback(AuthenticationAlreadyLoggedFailed);
   }
 
   return callback(AuthenticationFailed);
