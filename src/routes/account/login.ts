@@ -1,11 +1,11 @@
-import { http } from "@proto/js";
-import { verify, randomBytes } from "crypto";
+import * as http from "@proto/http_pb";
+import { randomBytes } from "crypto";
 import type { RouteOptions } from "fastify";
-import { database } from "src/service/database";
 import { Env } from "src/service/env";
-import { finishAndSend, headers } from "src/util/routes";
+import { headers } from "src/util/routes";
 import type { LoginProps } from "../types";
 import { argon2verify } from "src/util/hash";
+import { create, toBinary } from "@bufbuild/protobuf";
 
 export const loginRoute: RouteOptions = {
   url: "/login",
@@ -30,6 +30,8 @@ export const loginRoute: RouteOptions = {
   handler: async (req, res) => {
     headers(res);
     const body = req.body as LoginProps;
+
+    const database = res.server.db;
 
     const account = await database.account.findFirst({
       where: {
@@ -76,12 +78,13 @@ export const loginRoute: RouteOptions = {
         maxAge: 7 * 24 * 60 * 60,
         signed: true,
       });
-      res.status(http.ResponseStatus.Ok);
-      finishAndSend(
-        http.LoginAndRegisterResponse.encode({
-          token,
-        }),
-        res,
+      res.status(http.ResponseStatus.Ok).send(
+        toBinary(
+          http.LoginAndRegisterResponseSchema,
+          create(http.LoginAndRegisterResponseSchema, {
+            token,
+          }),
+        ),
       );
     } else {
       res.status(http.ResponseStatus.WrongPassword).send();

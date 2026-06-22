@@ -1,7 +1,6 @@
 import type { Account } from "@prisma/index";
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { database } from "src/service/database";
 
 export const authenticateUser = async (
   req: FastifyRequest,
@@ -11,6 +10,7 @@ export const authenticateUser = async (
     const unsignedToken = req.unsignCookie(req.cookies?.token);
 
     const token = unsignedToken.value!;
+    const database = res.server.db;
 
     const session = await database.session.findFirst({
       where: {

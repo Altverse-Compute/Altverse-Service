@@ -25,7 +25,7 @@
     "paths": {
       "@prisma/*": ["generated/prisma/*"],
       "@prisma": ["generated/prisma/index"],
-      "@proto/*": ["src/proto/generated/*"]
+      "@proto/*": ["src/proto/gen/*"]
     }
   },
   "include": ["src/types/**/*.d.ts", "src/**/*.ts"],

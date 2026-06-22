@@ -1,8 +1,7 @@
 import { Role } from "@prisma/index";
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import type { RouteOptions } from "fastify";
 import { authenticateUser } from "src/routes/helper";
-import { database } from "src/service/database";
 import { argon2hash } from "src/util/hash";
 import { headers } from "src/util/routes";
 
@@ -11,7 +10,7 @@ export const editServerRoute: RouteOptions = {
   url: "/admin/servers/edit",
   config: {
     rateLimit: {
-      max: 3,
+      max: 1,
       timeWindow: "5s",
     },
   },
@@ -22,7 +21,7 @@ export const editServerRoute: RouteOptions = {
         id: { type: "string", minLength: 24, maxLength: 24 },
         name: { type: "string", maxLength: 32 },
         domain: { type: "string", maxLength: 64 },
-        icon: { type: "string", maxLength: 2 },
+        icon: { type: "string", maxLength: 10 },
         token: { type: "string", minLength: 62, maxLength: 65 },
       },
       required: ["id", "name", "domain", "icon"],
@@ -42,6 +41,8 @@ export const editServerRoute: RouteOptions = {
     }
 
     const verifiedBody = req.body as http.AdminModeEditServerRequest;
+
+    const database = res.server.db;
 
     const server = await database.server.findFirst({
       where: {
@@ -67,6 +68,8 @@ export const editServerRoute: RouteOptions = {
         domain: verifiedBody.domain,
       },
     });
+
+    await res.server.rpc.syncDomains();
 
     res.code(http.ResponseStatus.Ok);
   },

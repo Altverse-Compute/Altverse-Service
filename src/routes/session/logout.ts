@@ -1,7 +1,6 @@
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import type { RouteOptions } from "fastify";
-import { database } from "src/service/database";
-import { headers, finishAndSend } from "src/util/routes";
+import { headers } from "src/util/routes";
 
 export const logoutRoute: RouteOptions = {
   url: "/logout",
@@ -22,7 +21,7 @@ export const logoutRoute: RouteOptions = {
       if (unsignedToken.valid) {
         const token = unsignedToken.value;
 
-        const session = await database.session.findFirst({
+        const session = await res.server.db.session.findFirst({
           where: {
             token,
           },

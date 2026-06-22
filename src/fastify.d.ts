@@ -1,11 +1,14 @@
 import { FastifyInstance as FI } from "fastify";
+import { PrismaClient } from "@prisma";
 
-export namespace Fastify {
+declare module "fastify" {
   interface RPC {
-    getOnlineServers: () => number;
+    getOnlineServers: () => Record<string, ServerOnline>;
+    syncDomains: () => Promise<void>;
   }
 
   export interface FastifyInstance extends FI {
     rpc: RPC;
+    db: PrismaClient;
   }
 }

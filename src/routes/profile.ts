@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { ProfileProps } from "./types.ts";
-import { database } from "../service/database.ts";
-import { dbToProtoRole, finishAndSend, headers } from "src/util/routes.ts";
-import { http } from "@proto/js/index.js";
+import { dbToProtoRole, headers } from "src/util/routes.ts";
+import * as http from "@proto/http_pb.ts";
+import { create, toBinary } from "@bufbuild/protobuf";
 
 export const profile = (app: FastifyInstance) => {
   app.route({
@@ -27,6 +27,7 @@ export const profile = (app: FastifyInstance) => {
     handler: async (req, res) => {
       headers(res);
       const body = req.params as ProfileProps;
+      const database = res.server.db;
 
       const account = await database.account.findFirst({
         where: {
@@ -50,9 +51,9 @@ export const profile = (app: FastifyInstance) => {
         return;
       }
 
-      res.code(http.ResponseStatus.Ok);
-      finishAndSend(
-        http.ProfileResponse.encode({
+      const binary = toBinary(
+        http.ProfileResponseSchema,
+        create(http.ProfileResponseSchema, {
           profile: {
             username: account.name,
             highest: profile.highest as Record<string, string>,
@@ -61,8 +62,8 @@ export const profile = (app: FastifyInstance) => {
             role: dbToProtoRole(account.role),
           },
         }),
-        res,
       );
+      res.code(http.ResponseStatus.Ok).send(binary);
     },
   });
 };

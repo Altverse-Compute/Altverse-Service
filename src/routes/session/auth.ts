@@ -1,7 +1,7 @@
-import { http } from "@proto/js";
+import { create, toBinary } from "@bufbuild/protobuf";
+import * as http from "@proto/http_pb";
 import type { RouteOptions } from "fastify";
-import { database } from "src/service/database";
-import { dbToProtoRole, finishAndSend, headers } from "src/util/routes";
+import { dbToProtoRole, headers } from "src/util/routes";
 
 export const authRoute: RouteOptions = {
   url: "/auth",
@@ -24,6 +24,7 @@ export const authRoute: RouteOptions = {
       }
 
       const token = unsignedToken.value;
+      const database = req.server.db;
 
       const session = await database.session.findFirst({
         where: {
@@ -59,17 +60,19 @@ export const authRoute: RouteOptions = {
         },
       });
       if (profile != null && account != null) {
-        finishAndSend(
-          http.AuthResponse.encode({
-            profile: {
-              username: account.name,
-              highest: profile.highest as Record<string, string>,
-              accessories: profile.accessories,
-              vp: profile.vp,
-              role: dbToProtoRole(account.role),
-            },
-          }),
-          res,
+        res.send(
+          toBinary(
+            http.AuthResponseSchema,
+            create(http.AuthResponseSchema, {
+              profile: {
+                username: account.name,
+                highest: profile.highest as Record<string, string>,
+                accessories: profile.accessories,
+                vp: profile.vp,
+                role: dbToProtoRole(account.role),
+              },
+            }),
+          ),
         );
       } else {
         res.status(401);

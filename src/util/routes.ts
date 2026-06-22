@@ -1,7 +1,6 @@
 import type { Role } from "@prisma/index";
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import type { FastifyReply } from "fastify";
-import { Writer } from "protobufjs";
 
 const map: Record<string, http.AccountRole> = {
   USER: http.AccountRole.USER,
@@ -12,11 +11,6 @@ const map: Record<string, http.AccountRole> = {
 
 export const dbToProtoRole = (role: Role): http.AccountRole => {
   return map[role];
-};
-
-export const finishAndSend = (writer: Writer, reply: FastifyReply) => {
-  const finished = new Uint8Array(writer.finish().buffer);
-  reply.send(finished);
 };
 
 export const headers = (reply: FastifyReply) => {

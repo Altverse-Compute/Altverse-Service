@@ -1,9 +1,8 @@
-import { http } from "@proto/js";
+import { create, toBinary } from "@bufbuild/protobuf";
+import * as http from "@proto/http_pb";
 import type { RouteOptions } from "fastify";
-import { serversOnline } from "src/plugins/rpc/middleware";
 import { authenticateUser } from "src/routes/helper";
-import { database } from "src/service/database";
-import { finishAndSend, headers } from "src/util/routes";
+import { headers } from "src/util/routes";
 
 export * from "./add";
 export * from "./edit";
@@ -31,23 +30,25 @@ export const serversRoute: RouteOptions = {
       res.send({});
     }
 
+    const database = res.server.db;
+
     const servers = await database.server.findMany({});
 
-    console.log(Object.keys(serversOnline).length);
-
-    finishAndSend(
-      http.AdminModeServersResponse.encode({
-        online: Object.keys(serversOnline).length,
-        count: servers.length,
-        servers: servers.map((v) => ({
-          id: v.id,
-          name: v.name,
-          domain: v.domain,
-          icon: v.icon,
-          lastSeen: Date.now().toString(),
-        })),
-      }),
-      res,
+    res.send(
+      toBinary(
+        http.AdminModeServersResponseSchema,
+        create(http.AdminModeServersResponseSchema, {
+          online: Object.keys(res.server.rpc.getOnlineServers()).length,
+          count: servers.length,
+          servers: servers.map((v) => ({
+            id: v.id,
+            name: v.name,
+            domain: v.domain,
+            icon: v.icon,
+            lastSeen: Date.now().toString(),
+          })),
+        }),
+      ),
     );
   },
 };

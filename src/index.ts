@@ -9,14 +9,15 @@ import { profile } from "./routes/profile.ts";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { servers } from "./routes/servers.ts";
-import rpcPlugin from "./plugins/rpc";
 import { admin } from "./routes/admin/index.ts";
+import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
+import { rpcRoutes } from "./plugins/connect/router.ts";
+import { createValidateInterceptor } from "@connectrpc/validate";
+import { prismaPlugin } from "./plugins/db/index.ts";
 
 const fastify = Fastify({
   logger: true,
 });
-
-await fastify.register(rpcPlugin);
 
 await fastify.register(helmet);
 await fastify.register(cors, {
@@ -31,6 +32,12 @@ await fastify.register(cors, {
 await fastify.register(cookie, {
   secret: Env.cookieSecret,
 });
+
+await fastify.register(fastifyConnectPlugin, {
+  interceptors: [createValidateInterceptor()],
+  routes: rpcRoutes(fastify),
+});
+await fastify.register(prismaPlugin);
 
 for (const route of [account, session, profile, servers, admin])
   await fastify.register(route);

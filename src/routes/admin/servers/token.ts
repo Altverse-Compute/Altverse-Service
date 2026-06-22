@@ -1,17 +1,18 @@
+import { create, toBinary } from "@bufbuild/protobuf";
 import { Role } from "@prisma/index";
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import { randomBytes } from "crypto";
 import type { RouteOptions } from "fastify";
 import { authenticateUser } from "src/routes/helper";
-import { finishAndSend, headers } from "src/util/routes";
+import { headers } from "src/util/routes";
 
 export const generateServerTokenRoute: RouteOptions = {
   method: "GET",
   url: "/admin/servers/token",
   config: {
     rateLimit: {
-      max: 3,
-      timeWindow: "5s",
+      max: 1,
+      timeWindow: "10s",
     },
   },
   handler: async (req, res) => {
@@ -26,12 +27,13 @@ export const generateServerTokenRoute: RouteOptions = {
       res.code(http.ResponseStatus.NotAuthenticated);
     }
 
-    res.code(http.ResponseStatus.Ok);
-    finishAndSend(
-      http.AdminModeServerTokenResponse.encode({
-        token: randomBytes(32).toString("hex"),
-      }),
-      res,
+    res.code(http.ResponseStatus.Ok).send(
+      toBinary(
+        http.AdminModeServerTokenResponseSchema,
+        create(http.AdminModeServerTokenResponseSchema, {
+          token: randomBytes(32).toString("hex"),
+        }),
+      ),
     );
   },
 };

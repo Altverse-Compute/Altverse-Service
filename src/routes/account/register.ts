@@ -1,12 +1,11 @@
-import { http } from "@proto/js";
+import * as http from "@proto/http_pb";
 import { hash, randomBytes } from "crypto";
 import type { RouteOptions } from "fastify";
-import { database } from "src/service/database";
 import { Env } from "src/service/env";
-import { headers, finishAndSend } from "src/util/routes";
+import { headers } from "src/util/routes";
 import type { RegisterProps } from "../types";
-import Ajv from "ajv";
 import { argon2hash } from "src/util/hash";
+import { create, toBinary } from "@bufbuild/protobuf";
 
 export const registerRoute: RouteOptions = {
   url: "/register",
@@ -32,6 +31,7 @@ export const registerRoute: RouteOptions = {
   handler: async (req, res) => {
     headers(res);
     const body = req.body as RegisterProps;
+    const database = res.server.db;
 
     const find = await database.account.findFirst({
       where: {
@@ -81,12 +81,13 @@ export const registerRoute: RouteOptions = {
       signed: true,
     });
 
-    res.status(http.ResponseStatus.Ok);
-    finishAndSend(
-      http.LoginAndRegisterResponse.encode({
-        token,
-      }),
-      res,
+    res.status(http.ResponseStatus.Ok).send(
+      toBinary(
+        http.LoginAndRegisterResponseSchema,
+        create(http.LoginAndRegisterResponseSchema, {
+          token,
+        }),
+      ),
     );
   },
 };
