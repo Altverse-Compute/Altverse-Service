@@ -5,6 +5,7 @@ import {
   generateServerTokenRoute,
   serversRoute,
 } from "./servers";
+import { remServerRoute } from "./servers/rem";
 
 export const admin = (app: FastifyInstance) => {
   for (const route of [
@@ -12,6 +13,7 @@ export const admin = (app: FastifyInstance) => {
     generateServerTokenRoute,
     editServerRoute,
     addServerRoute,
+    remServerRoute,
   ])
     app.route(route);
 };

@@ -6,6 +6,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { logger } from "src/logger";
 import { Env } from "src/service/env";
 import { argon2verify } from "src/util/hash";
+import { Role } from "@proto/rpc_pb";
 
 export interface ServerOnline {
   id: string;
@@ -17,7 +18,7 @@ export interface ServerOnline {
   session: string;
 }
 
-export let serversOnline: Record<string, ServerOnline> = {};
+let serversOnline: Record<string, ServerOnline> = {};
 
 const removeServer = (id: string) => {
   delete serversOnline[id];
@@ -39,7 +40,6 @@ export const rpcRoutes = (app: FastifyInstance) => {
       for (const server of servers) {
         for (let i = 0; i < values.length; i++) {
           const value = values[i];
-          console.log(value, values);
           if (server.id === value.id) {
             serversOnline[keys[i]] = {
               ...serversOnline[keys[i]],
@@ -56,7 +56,6 @@ export const rpcRoutes = (app: FastifyInstance) => {
         request: rpc.AuthenticationRequest,
         context: HandlerContext,
       ) {
-        console.log(context.url);
         if (
           request &&
           request.token.length === 64 &&
@@ -105,22 +104,95 @@ export const rpcRoutes = (app: FastifyInstance) => {
                 };
               }
             }
-          } catch (e) {
-            throw new ConnectError("", Code.Unavailable);
+          } catch (error) {
+            throw new ConnectError(
+              (error as any).message,
+              Code.Unauthenticated,
+            );
           }
-          throw new ConnectError("", Code.Unavailable);
+          throw new ConnectError("", Code.Unauthenticated);
         }
 
-        throw new ConnectError("", Code.Unavailable);
+        throw new ConnectError("", Code.Unauthenticated);
+      },
+      async ping(request, context) {
+        const server = authenticate(context);
+        if (server && request.alive) {
+          serversOnline[server.id].online = request.online;
+          return { success: true };
+        }
+        throw new ConnectError("", Code.Unauthenticated);
+      },
+      async joinPlayer(request, context) {
+        if (!authenticate(context)) {
+          throw new ConnectError("", Code.Unauthenticated);
+        }
+        const database = app.db;
+
+        const session = await database.session.findFirst({
+          where: {
+            token: request.token,
+          },
+        });
+
+        if (!session) {
+          throw new ConnectError("4000", Code.Unauthenticated);
+        }
+
+        const account = await database.account.findFirst({
+          where: {
+            id: session.accountId,
+          },
+        });
+
+        app.log.info({
+          type: "joinPlayer",
+          accountId: session.accountId,
+          username: account!.name,
+        });
+
+        if (!account) {
+          throw new ConnectError("4001", Code.Unauthenticated);
+        }
+
+        return {
+          name: account.name,
+          role: Role.USER,
+          id: session.accountId,
+        };
       },
     });
   };
 };
 
-export function wrapLog<Request, Response>(route: string, object: Object) {
+function wrapLog<Request, Response>(route: string, object: Object) {
   logger.info({
     additional: object,
     method: "RPC",
     path: "/" + route,
   });
 }
+
+export const authenticate = (context: HandlerContext) => {
+  const tokens = context.requestHeader.get("Alt-Authenticate");
+  if (
+    tokens !== undefined &&
+    typeof tokens === "string" &&
+    tokens.length >= 64
+  ) {
+    const filteredServers = Object.values(serversOnline).filter(
+      (v) => v.session === tokens,
+    );
+    if (filteredServers.length != 0) {
+      const server = filteredServers[0];
+      if (server.lastTimeSeen <= Date.now() + Env.gTimeout) {
+        serversOnline[server.id].lastTimeSeen = Date.now();
+        return server;
+      } else {
+        removeServer(server.id);
+        return false;
+      }
+    }
+  }
+  return false;
+};

@@ -23,15 +23,14 @@ export const servers = (app: FastifyInstance) => {
         online: v.online,
       }));
 
-      res.code(http.ResponseStatus.Ok).send(
-        toBinary(
-          http.ServersResponseSchema,
-          create(http.ServersResponseSchema, {
-            status: http.ResponseStatus.Ok,
-            servers,
-          }),
-        ),
+      const binary = toBinary(
+        http.ServersResponseSchema,
+        create(http.ServersResponseSchema, {
+          status: http.ResponseStatus.Ok,
+          servers,
+        }),
       );
+      res.code(http.ResponseStatus.Ok).send(binary);
     },
   });
 };

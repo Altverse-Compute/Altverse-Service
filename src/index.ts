@@ -10,10 +10,8 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { servers } from "./routes/servers.ts";
 import { admin } from "./routes/admin/index.ts";
-import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
-import { rpcRoutes } from "./plugins/connect/router.ts";
-import { createValidateInterceptor } from "@connectrpc/validate";
 import { prismaPlugin } from "./plugins/db/index.ts";
+import { rpc } from "./plugins/rpc/index.ts";
 
 const fastify = Fastify({
   logger: true,
@@ -33,11 +31,8 @@ await fastify.register(cookie, {
   secret: Env.cookieSecret,
 });
 
-await fastify.register(fastifyConnectPlugin, {
-  interceptors: [createValidateInterceptor()],
-  routes: rpcRoutes(fastify),
-});
 await fastify.register(prismaPlugin);
+await fastify.register(rpc);
 
 for (const route of [account, session, profile, servers, admin])
   await fastify.register(route);
