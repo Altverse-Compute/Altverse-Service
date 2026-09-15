@@ -7,6 +7,7 @@ import { logger } from "src/logger";
 import { Env } from "src/service/env";
 import { argon2verify } from "src/util/hash";
 import { Role } from "@proto/rpc_pb";
+import { $Enums } from "@prisma/index";
 
 export interface ServerOnline {
   id: string;
@@ -155,9 +156,21 @@ export const rpcRoutes = (app: FastifyInstance) => {
           throw new ConnectError("4001", Code.Unauthenticated);
         }
 
+        let role: Role = Role.USER;
+
+        if (account.role === $Enums.Role.MOD) {
+          role = Role.MOD;
+        }
+        if (account.role === $Enums.Role.DEV) {
+          role = Role.DEV;
+        }
+        if (account.role === $Enums.Role.ADMIN) {
+          role = Role.DEV;
+        }
+
         return {
           name: account.name,
-          role: Role.USER,
+          role,
           id: session.accountId,
         };
       },
